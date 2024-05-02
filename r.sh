@@ -41,8 +41,10 @@ nasm -f elf64 -o fgets.o fgets.asm
 
 nasm -f elf64 -o atof.o atof.asm
 
+nasm -f elf64 -o sin.o sin.asm
+
 echo "Link the X86 assembled code"
-ld  -o pure-assembly.out director.o producer.o strlen.o fputs.o fgets.o atof.o -g
+ld  -o pure-assembly.out director.o producer.o strlen.o fputs.o fgets.o atof.o sin.o -g
 
 echo "Run the executable file"
 ./pure-assembly.out

@@ -27,40 +27,29 @@
 	; Author email: epwilliams@csu.fullerton.edu
 	; Author CWID : ####
 	
-	global producer
-	
-	extern strlen
-	extern fputs
-	extern fgets
-	extern atof
+	global sin
+
 	extern multiplier
 
-    max_length equ 256
-	
-	section .data
-	
-    prompt_side1 db "Please enter the length of side 1: ", 0
-    prompt_side2 db "Please enter the length of side 2: ", 0
-    prompt_angle3 db "Please enter the degrees of the angle between: ", 0
-	
-    areaMsg db "The area of this triangle is: ", 10, 0
-	thankYouMsg db "Thank you for using an Erik product.", 10, 0
-	
-	newline db 10
-	
 	section .bss
-	nice_number resb max_length  ; Reserve 20 bytes for the area as string
 	
+	align 64
+	; required for xstor and xrstor instructions
+	backup_storage_area resb 832
+
+	section .data
+	deg_to_rad dq 0.0174533
+
 	section .text
-producer:
-	; Back up components
+sin:
+	; backup GPRs (General Purpose Registers)
 	push rbp
 	mov rbp, rsp
 	push rbx
 	push rcx
 	push rdx
-	push rsi
 	push rdi
+	push rsi
 	push r8
 	push r9
 	push r10
@@ -71,67 +60,45 @@ producer:
 	push r15
 	pushf
 	
-	; Print prompt 1
-	mov rdi, prompt_side1
-	call fputs
+	; - - - - - - - - - - - - - - - - -
+	; backup all other registers (not GPRs)
+	mov rax, 7
+	mov rdx, 0
+	xsave [backup_storage_area]
 	
-	; Read number
-	mov rdi, nice_number
-	mov rsi, 10
-	call fgets
+	; angle "xmm0" convert to radians
+	movsd xmm15, xmm0
+	mulsd xmm15, [deg_to_rad]
+	movsd xmm14, xmm15
+	mov rcx, 40                  ; repeat 40x
+	mov r15, 0
+	cvtsi2sd xmm13, r15
 	
-	; Convert number
-	mov rdi, nice_number
-	call atof
+whileLoop:
+	addsd xmm13, xmm14           ; 1st op is sin(x)
 	
-	; Print prompt 2
-	mov rdi, prompt_side2
-	call fputs
+	movsd xmm0, xmm15
+	mov rax, 1
+	mov rdi, r15
+	call multiplier
+	movsd xmm12, xmm0
 	
-	; Read number
-	mov rdi, nice_number
-	mov rsi, 10
-	call fgets
+	mulsd xmm14, xmm12
+	inc r15
+	loop whileLoop
 	
-	; Convert number
-	mov rdi, nice_number
-	call atof
+	; put answer on stack
+	push qword 0
+	push qword 0
+	movsd [rsp], xmm13
 	
-	; Print prompt 3
-	mov rdi, prompt_angle3
-	call fputs
-	
-	; Read number
-	mov rdi, nice_number
-	mov rsi, 10
-	call fgets
-	
-	; Convert number
-	mov rdi, nice_number
-	call atof
+	; - - - - - - - - - - - - ; - - - - - - - - - - - BEGIN section .TEXT ~POST~ REQS - - - - - - - - - - - - ; - - - - - - - - - - - - - - - - ;
+	;Restore the values to non - GPRs
+	mov rax, 7
+	mov rdx, 0
+	xrstor [backup_storage_area]
 
-    ; Output newline
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, newline
-    mov rdx, 1
-    syscall
-	
-	; Example of calculation and displaying results (skipping actual calculation for now)
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, areaMsg
-	mov rdx, 31
-	syscall
-	
-	; Display thank you message
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, thankYouMsg
-	mov rdx, 38
-	syscall
-	
-	;Restore the original values to the GPRs
+	;Restore the GPRs
 	popf
 	pop r15
 	pop r14
@@ -141,12 +108,17 @@ producer:
 	pop r10
 	pop r9
 	pop r8
-	pop rdi
 	pop rsi
+	pop rdi
 	pop rdx
 	pop rcx
 	pop rbx
-	pop rbp
+	pop rbp                      ;Restore rbp to the base of the activation record of the caller program
+	; - - - - - - - - - - - - - ; - - - - - - - - - - END section .TEXT ~POST~ REQS - - - - - - - - - - - - - - ; - - - - - - - - - - - - - - - - ;
 	
-	; Clean up
+	; return answer
+	movsd xmm0, [rsp]
+	pop rax
+	pop rax
+	
 	ret
