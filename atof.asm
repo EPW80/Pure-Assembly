@@ -27,25 +27,46 @@
 	; Author email: epwilliams@csu.fullerton.edu
 	; Author CWID : ####
 	
-	global atof
+	;Assembler directives
+	base_number equ 10           ;10 base of the decimal number system
+	ascii_zero equ 48            ;48 is the ascii value of '0'
+	null equ 0
+	minus equ ' - '
+	decimal_point equ '.'
 	
-	section .data
-	neg_mask dq 0x8000000000000000
+	;Global declaration for linking files.
+	global atof                  ;This makes atolong callable by functions outside of this file.
 	
-	section .bss
+	segment .data                ;Place initialized data here
+	;This segment is empy
+	
+	segment .bss
+	;Declare pointers to un - initialized space in this segment.
 	align 64
-	storedata resb 832
+	;This segment is empty
+	; [ 12.34, 23.5] resq (64 bits)
+	; ['a', 'b', 'c'] (8 bits (1 byte) per element)
+	float_as_string_arr resb 100
+	;This section (or segment) is for declaring empty array
+	; required for xstor and xrstor instructions
+	backup_storage_area resb 832
 	
-	section .text
-atof:
-	; Back up
+	;==============================================================================================================================
+	;===== Begin the executable code here.
+	;==============================================================================================================================
+	segment .text                ;Place executable instructions in this segment.
+	
+atof:                         ;Entry point. Execution begins here.
+	
+	; - - - - - - - - - BEGIN SEGMENT .TEXT ~PRE~ REQS - - - - - - - - - - ;
+	; backup GPRs (General Purpose Registers)
 	push rbp
 	mov rbp, rsp
 	push rbx
 	push rcx
 	push rdx
-	push rsi
 	push rdi
+	push rsi
 	push r8
 	push r9
 	push r10
@@ -55,100 +76,46 @@ atof:
 	push r14
 	push r15
 	pushf
-	
+	; backup all other registers (meaning not GPRs)
 	mov rax, 7
 	mov rdx, 0
-	xsave [storedata]
+	xsave [backup_storage_area]
+	; - - - - - - - - - - END SEGMENT .TEXT ~PRE~ REQS - - - - - - - - - - - - ;
 	
-	; Parameters
-	mov r15, rdi                 ; An array of char with null termination expected
+	; save the arguments
+	movsd xmm15, xmm0
+	; multiply by 10 until we get this - > 15623
 	
-	; Find where the radix point is
-	; TODO: Add checks for non - float using isfloat
-	xor r14, r14                 ; Index for the radix point
-find_radix_loop:
-	cmp byte[r15 + r14], '.'
-	je found_radix_point
+	xorpd xmm12, xmm12           ; just to have a 0.0 to compare
+	; 156.23 - > 15623
+	mov r11, 0
+whileLoop:
+	; 156.23 - 156
+	; original_num - int_converted_num
+	; original_num - the original float is in xmm15
+	cvtsd2si r15, xmm15          ; original_num
+	cvtsi2sd xmm14, r15          ; int_converted_num
 	
-	inc r14
-	jmp find_radix_loop
+	movsd xmm13, xmm15
+	subsd xmm13, xmm14           ; xmm13 = original_num - int_converted_num
 	
-found_radix_point:
-	; Set up registers for integer part parsing
-	xor r13, r13                 ; Integer total
-	mov r12, 1                   ; Integer multiplier 1, 10, 100, 1000, ...
-	mov r11, r14                 ; Make a copy of the radix point
-	dec r11
-	xor r10, r10                 ; Flag 0 = positive, 1 = negative
+	ucomisd xmm13, xmm12
+	je OutOfLoop
+	; else
+	mov rax, 10
+	cvtsi2sd xmm11, rax
+	; 156.23 * 10 - > 1562.3
+	mulsd xmm15, xmm11
+	inc r11
+	jmp whileLoop
 	
-parse_integer:
-	mov al, byte[r15 + r11]
-	cmp al, '+'
-	je finish_parse_integer
-	cmp al, '-'
-	je parse_integer_negative
-	
-	; Convert the ASCII character to in integer and add it to the total
-	sub al, '0'                  ; Subtract 48 from the ASCII to get integer value
-	imul rax, r12                ; Multiply the integer value with 1, 10, 100, 1000, ...
-	add r13, rax                 ; Add the multiplied value to the total
-	imul r12, 10                 ; Increase the multiplier exponentially by 10
-	
-	dec r11                      ; Move the index from the radix point toward the front of the string
-	cmp r11, 0                   ; Keep looping until all integer part are parsed
-	jge parse_integer
-	jmp finish_parse_integer
-	
-parse_integer_negative:
-	mov r10, 1                   ; Set r10 to 1 to flag the number as negative
-	
-finish_parse_integer:
-	; Set up values for decimal part parsing
-	mov rax, 10                  ; Load 10 into rax
-	cvtsi2sd xmm11, rax          ; Load 10.0 into xmm11
-	xorpd xmm13, xmm13           ; Decimal total
-	movsd xmm12, xmm11           ; Decimal divisor 10, 100, 1000, ...
-	inc r14
-	
-parse_decimal:
-	mov al, byte [r15 + r14]
-	sub al, '0'                  ; Subtract 48 from the ASCII to get integer value
-	
-	; Convert the ASCII character to decimal value
-	cvtsi2sd xmm0, rax           ; Load the integer value into an xmm register for division
-	divsd xmm0, xmm12            ; Divide the integer value by 10, 100, 1000, ...
-	addsd xmm13, xmm0            ; Add the decimal value to the total
-	mulsd xmm12, xmm11           ; Increase the decimal divisor exponentially by 10
-	
-	inc r14                      ; Keep looping until null termination is found.
-	cmp byte[r15 + r14], 0
-	jne parse_decimal
-	
-	; Add the parsed integer and decimal part together
-	cvtsi2sd xmm0, r13
-	addsd xmm0, xmm13
-	
-	; Check the negative flag 0 = positive, 1 = negative
-	cmp r10, 0
-	je return
-	
-	; Negate the number of the flag is equal to 1
-	movsd xmm1, [neg_mask]       ; Load the negation mask into xmm1
-	xorpd xmm0, xmm1
-	
-return:
-	; Return
-	push qword 0
-	movsd [rsp], xmm0
-	
+OutOfLoop:
+	; - - - - - - - - - - - - ; - - - - - - - - - - - BEGIN SEGMENT .TEXT ~POST~ REQS - - - - - - - - - - - - ; - - - - - - - - - - - - - - - - ;
+	;Restore the values to non - GPRs
 	mov rax, 7
 	mov rdx, 0
-	xrstor [storedata]
-	
-	movsd xmm0, [rsp]
-	pop rax
-	
-	; Restore
+	xrstor [backup_storage_area]
+	;Restore the GPRs
 	popf
 	pop r15
 	pop r14
@@ -158,11 +125,15 @@ return:
 	pop r10
 	pop r9
 	pop r8
-	pop rdi
 	pop rsi
+	pop rdi
 	pop rdx
 	pop rcx
 	pop rbx
-	pop rbp
+	pop rbp                      ;Restore rbp to the base of the activation record of the caller program
+	; - - - - - - - - - - - - - ; - - - - - - - - - - END SEGMENT .TEXT ~POST~ REQS - - - - - - - - - - - - - - ; - - - - - - - - - - - - - - - - ;
 	
-	ret
+	;Now the system stack is in the same state it was when this function began execution.
+	ret                          ;Pop a qword from the stack into rip, and continue executing..
+	;========== End of module atol.asm ================================================================================================
+	;========1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========3 * * 

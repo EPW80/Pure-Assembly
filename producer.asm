@@ -28,7 +28,6 @@
 	; Author CWID : ####
 	
 	global producer
-	
 	extern strlen
 	extern fputs
 	extern fgets
@@ -36,15 +35,16 @@
 	extern ftoa
 	
 	max_length equ 256
+	segment .bss
+	;This section (or segment) is for declaring empty arrays
 	
-	section .bss
 	align 64
+	; required for xstor and xrstor instructions
 	backup_storage_area resb 832
-	
 	section .data
-	prompt_side_one db "Please enter the length of side 1: ", 0
-	prompt_side_two db "Please enter the length of side 2: ", 0
-	prompt_angle db "Please enter the degrees of the angle between: ", 0
+prompt_side_one db "Please enter the length of side 1: ", 0
+prompt_side_two db "Please enter the length of side 2: ", 0
+prompt_angle db "Please enter the degrees of the angle between: ", 0
 	msg_area db "The area of this triangle is ", 0
 	msg_sqft db " square feet.", 10, 0
 	msg_thx db "Thank you for using a Williams product.", 10, 0
@@ -54,11 +54,10 @@
 	side_two resb max_length
 	angle resb max_length
 	area resb max_length
-	
 	section .text
 producer:
 	
-	; - - - - - - - - - BEGIN section .TEXT ~PRE~ REQS - - - - - - - - - - ;
+	; - - - - - - - - - BEGIN SEGMENT .TEXT ~PRE~ REQS - - - - - - - - - - ;
 	; backup GPRs (General Purpose Registers)
 	push rbp
 	mov rbp, rsp
@@ -76,12 +75,11 @@ producer:
 	push r14
 	push r15
 	pushf
-	
 	; backup all other registers (meaning not GPRs)
 	mov rax, 7
 	mov rdx, 0
 	xsave [backup_storage_area]
-	; - - - - - - - - - - END section .TEXT ~PRE~ REQS - - - - - - - - - - - - ;
+	; - - - - - - - - - - END SEGMENT .TEXT ~PRE~ REQS - - - - - - - - - - - - ;
 	
 	mov rdi, prompt_side_one
 	call fputs
@@ -133,12 +131,12 @@ producer:
 	mov rdi, msg_thx
 	call fputs
 	
-	; put answer on stack
+	; put ~answer~ on stack
 	push qword 0
 	push qword 0
 	movsd [rsp], xmm12
 	
-	; - - - - - - - - - - - - ; - - - - - - - - - - - BEGIN section .TEXT ~POST~ REQS - - - - - - - - - - - - ; - - - - - - - - - - - - - - - - ;
+	; - - - - - - - - - - - - ; - - - - - - - - - - - BEGIN SEGMENT .TEXT ~POST~ REQS - - - - - - - - - - - - ; - - - - - - - - - - - - - - - - ;
 	;Restore the values to non - GPRs
 	mov rax, 7
 	mov rdx, 0
@@ -159,9 +157,9 @@ producer:
 	pop rcx
 	pop rbx
 	pop rbp                      ;Restore rbp to the base of the activation record of the caller program
-	; - - - - - - - - - - - - - ; - - - - - - - - - - END section .TEXT ~POST~ REQS - - - - - - - - - - - - - - ; - - - - - - - - - - - - - - - - ;
+	; - - - - - - - - - - - - - ; - - - - - - - - - - END SEGMENT .TEXT ~POST~ REQS - - - - - - - - - - - - - - ; - - - - - - - - - - - - - - - - ;
 	
-	; return the answer
+	; return the ~answer~
 	movsd xmm0, [rsp]
 	pop rax
 	pop rax

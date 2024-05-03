@@ -34,127 +34,144 @@
 	section .text
 	
 ftoa:
-	test rsi, rsi
-	je .014
 	
+	xor eax, eax
+	test rsi, rsi
+	je .019
 	push rbp
-	mov rdx, rsi
 	mov rbp, rsp
 	push r15
+	mov r15, rdi
 	push r14
 	push r13
+	mov r13, rsi
 	push r12
 	push rbx
-	mov rbx, rdi
 	sub rsp, 40
 	ucomisd xmm0, xmm0
-	jpo .003
+	jpo .001
 	cmp rsi, 3
-	jg .002
-	
-.001:
-	xor eax, eax
-	jmp .013
-	
-.002:
+	jle .018
 	mov dword [rdi], 5136718
 	mov eax, 3
-	jmp .013
+	jmp .018
 	
-.003:
-	cvttsd2si eax, xmm0
-	mov rsi, rbx
-	movsd qword [rbp - 48H], xmm0
-	movsxd rdi, eax
-	mov r15d, eax
-	call itoa
-	test rax, rax
-	jz .001
-	cvtsi2sd xmm1, r15d
-	movsd xmm0, qword [rbp - 48H]
-	subsd xmm0, xmm1
+.001:
 	xorps xmm1, xmm1
 	comisd xmm1, xmm0
 	jbe .004
+	cmp rsi, 1
+	jg .003
+.002:
+	mov byte [r15], 0
+	jmp .007
+	
+.003:
+	mov byte [rdi], 45
 	xorps xmm0, oword [rel .LC1]
+	mov ebx, 1
+	jmp .005
 	
 .004:
+	xor ebx, ebx
+.005:
+	cvttsd2si r12, xmm0
+	lea rsi, [r15 + rbx]
+	mov rdx, r13
+	movsd qword [rbp - 48H], xmm0
+	mov rdi, r12
+	call itoa
+	test rax, rax
+	jz .002
+	cvtsi2sd xmm1, r12
+	movsd xmm0, qword [rbp - 48H]
+	add rax, rbx
+	subsd xmm0, xmm1
 	xorps xmm1, xmm1
 	comisd xmm0, xmm1
-	jbe .013
-	mov byte [rbx + rax], 46
-	lea r13, [rbp - 37H]
-	inc rax
-	mov edx, 7
-	mulsd xmm0, [rel .LC2]
-	mov rsi, r13
+	jbe .018
+	lea rdx, [rax + 2H]
 	mov r12, rsp
-	mov r15, rax
+	cmp rdx, r13
+	jle .008
+.006:
+	mov byte [r15], 0
+	mov rsp, r12
+.007:
+	xor eax, eax
+	jmp .018
+	
+.008:
+	mulsd xmm0, [rel .LC2]
+	mov byte [r15 + rax], 46
+	lea r13, [rbp - 37H]
+	mov edx, 7
+	mov rsi, r13
+	lea rbx, [rax + 1H]
 	cvttsd2si r14, xmm0
 	mov rdi, r14
 	call itoa
+	mov rdx, rax
 	test rax, rax
-	je .013
+	jz .006
 	xor ecx, ecx
 	test r14, r14
-	jle .009
-	
-.005:
+	jle .014
+.009:
 	cmp r14, 99999
-	jg .006
+	jg .010
 	imul r14, r14, 10
 	inc rcx
-	jmp .005
-	
-.006:
-	dec rax
-	lea rdx, [r13 + rcx]
-	
-.007:
-	test rax, rax
-	js .008
-	mov sil, byte [r13 + rax]
-	mov byte [rdx + rax], sil
-	dec rax
-	jmp .007
-	
-.008:
-	xor eax, eax
-	test rcx, rcx
-	mov rdi, r13
-	cmovs rcx, rax
-	mov al, 48
-	rep stosb
-	mov eax, 6
-	
-.009:
-	mov rdx, rax
-	cmp rax, 1
-	jle .010
-	cmp byte [r13 + rdx - 1H], 48
-	lea rax, [rax - 1H]
-	jz .009
+	jmp .009
 	
 .010:
-	mov rax, r15
-	
+	dec rdx
+	lea rax, [r13 + rcx]
 .011:
-	mov ecx, eax
-	lea rsi, [rbx + rax]
-	sub ecx, r15d
-	movsxd rcx, ecx
-	cmp rcx, rdx
-	jge .012
-	mov cl, byte [rbp + rcx - 37H]
-	mov byte [rbx + rax], cl
-	inc rax
+	test rdx, rdx
+	js .012
+	mov sil, byte [r13 + rdx]
+	mov byte [rax + rdx], sil
+	dec rdx
 	jmp .011
 	
 .012:
-	mov byte [rsi], 0
-	mov rsp, r12
+	xor eax, eax
+	test rcx, rcx
+	mov rdi, r13
+	mov edx, 6
+	cmovs rcx, rax
+	mov al, 48
+	rep stosb
+	jmp .014
 	
 .013:
+	cmp byte [r13 + rdx - 1H], 48
+	lea rax, [rdx - 1H]
+	jnz .015
+	mov rdx, rax
+.014:
+	cmp rdx, 1
+	jg .013
+.015:
+	mov rax, rbx
+.016:
+	mov ecx, eax
+	mov rsi, r15
+	sub ecx, ebx
+	add rsi, rax
+	movsxd rcx, ecx
+	cmp rcx, rdx
+	jge .017
+	mov cl, byte [rbp + rcx - 37H]
+	mov byte [r15 + rax], cl
+	inc rax
+	jmp .016
+	
+.017:
+	mov byte [rsi], 0
+	mov rsp, r12
+.018:
 	lea rsp, [rbp - 28H]
 	pop rbx
 	pop r12
@@ -164,8 +181,8 @@ ftoa:
 	pop rbp
 	ret
 	
-.014:
-	xor eax, eax
+.019:
+	
 	ret
 	
 	section .data
