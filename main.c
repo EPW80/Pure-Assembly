@@ -25,7 +25,6 @@
 //  Author information
 //  Author name : Erik Williams
 //  Author email: epwilliams@csu.fullerton.edu
-//  Author CWID : ####
 
 #include <stdio.h>
 
@@ -36,7 +35,7 @@ int main(void)
     printf("Welcome to Erik's Area Machine.\nWe compute all your areas.\n");
     double number = producer();
     printf("The driver received this number %lf and will keep it.\n", number);
-    printf("A zero will be sent to the OS as a sign of successful conclusion.\nBye.\n");
+    printf("A zero will be sent to the OS as a sign of successful conclusion.\nBye Bye!.\n");
 
     return 0;
 }

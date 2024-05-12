@@ -25,7 +25,6 @@
 	; Author information
 	; Author name : Erik Williams
 	; Author email: epwilliams@csu.fullerton.edu
-	; Author CWID : ####
 	
 	global fputs
 	extern strlen

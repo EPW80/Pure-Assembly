@@ -2,7 +2,7 @@
 	; components that manage, input, output and sort the array.
 	; Development Environment: [Linux Ubuntu 22.04]
 	; NASM Version: [NASM 2.14.02]
-	; Compilation Command: nasm -f elf64 -l strlen.lis -o strlen.o strlen.asm
+	; Compilation Command: nasm - f elf64 - l strlen.lis - o strlen.o strlen.asm
 	; Processor Architecture: [x86_64]
 	; Floating - Point Standard: IEEE 754
 	; Copyright (C) <2024> <Erik Williams>
@@ -25,7 +25,7 @@
 	; Author information
 	; Author name : Erik Williams
 	; Author email: epwilliams@csu.fullerton.edu
-	; Author CWID : ####
+
 	
 	global strlen
 	max_length equ 1024
@@ -53,7 +53,6 @@ strlen:
 	
 	; Parameters
 	mov r15, rdi
-	
 	xor r14, r14
 	
 count:

@@ -2,7 +2,7 @@
 	; components that manage, input, output and sort the array.
 	; Development Environment: [Linux Ubuntu 22.04]
 	; NASM Version: [NASM 2.14.02]
-	; Compilation Command: nasm -f elf64 -l sin.lis -o sin.o sin.asm
+	; Compilation Command: nasm - f elf64 - l sin.lis - o sin.o sin.asm
 	; Processor Architecture: [x86_64]
 	; Floating - Point Standard: IEEE 754
 	; Copyright (C) <2024> <Erik Williams>
@@ -25,7 +25,7 @@
 	; Author information
 	; Author name : Erik Williams
 	; Author email: epwilliams@csu.fullerton.edu
-	; Author CWID : ####
+
 	
 	extern multiplier
 	global sin
@@ -63,7 +63,6 @@ sin:
 	xsave [backup_storage_area]
 	; - - - - - - - - - - END SEGMENT .TEXT ~PRE~ REQS - - - - - - - - - - - - ;
 	
-	
 	; angle "xmm0" convert to radians
 	movsd xmm15, xmm0
 	mulsd xmm15, [deg_to_rad]
@@ -85,7 +84,7 @@ whileLoop:
 	inc r15
 	loop whileLoop
 	
-	; put ~answer~ on stack
+	; put answer on stack
 	push qword 0
 	push qword 0
 	movsd [rsp], xmm13
@@ -113,7 +112,7 @@ whileLoop:
 	pop rbp                      ;Restore rbp to the base of the activation record of the caller program
 	; - - - - - - - - - - - - - ; - - - - - - - - - - END SEGMENT .TEXT ~POST~ REQS - - - - - - - - - - - - - - ; - - - - - - - - - - - - - - - - ;
 	
-	; return the ~answer~
+	; return the answer
 	movsd xmm0, [rsp]
 	pop rax
 	pop rax

@@ -18,7 +18,7 @@
 # Author information
 # Author name : Erik Williams
 # Author email: epwilliams@csu.fullerton.edu
-# Author CWID : #####
+
 
 echo "Assemble the source file multiplier.asm"
 nasm -f elf64 -l multiplier.lis -o multiplier.o multiplier.asm

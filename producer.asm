@@ -2,7 +2,7 @@
 	; components that manage, input, output and sort the array.
 	; Development Environment: [Linux Ubuntu 22.04]
 	; NASM Version: [NASM 2.14.02]
-	; Compilation Command: nasm -f elf64 -l producer.lis -o producer.o producer.asm
+	; Compilation Command: nasm - f elf64 - l producer.lis - o producer.o producer.asm
 	; Processor Architecture: [x86_64]
 	; Floating - Point Standard: IEEE 754
 	; Copyright (C) <2024> <Erik Williams>
@@ -25,7 +25,6 @@
 	; Author information
 	; Author name : Erik Williams
 	; Author email: epwilliams@csu.fullerton.edu
-	; Author CWID : ####
 	
 	global producer
 	extern strlen
@@ -49,7 +48,7 @@
 	msg_area db "The area of this triangle is ", 0
 	msg_sqft db " square feet.", 10, 0
 	msg_thx db "Thank you for using a William's product.", 10, 0
-	
+
 	section .bss
 	side_one resb max_length
 	side_two resb max_length
@@ -132,7 +131,7 @@ producer:
 	mov rdi, msg_thx
 	call fputs
 	
-	; put ~answer~ on stack
+	; put answer on stack
 	push qword 0
 	push qword 0
 	movsd [rsp], xmm12
@@ -145,7 +144,7 @@ producer:
 	mov rdx, 0
 	xrstor [backup_storage_area]
 	
-	; return the ~answer~
+	; return the answer
 	movsd xmm0, [rsp]
 	pop rax
 	pop rax

@@ -25,7 +25,6 @@
 	; Author information
 	; Author name : Erik Williams
 	; Author email: epwilliams@csu.fullerton.edu
-	; Author CWID : ####
 	
 	global multiplier
 	
@@ -57,7 +56,7 @@ multiplier:
 	push r14
 	push r15
 	pushf
-	; backup all other registers (meaning not GPRs)
+	; backup all other registers (not GPRs)
 	mov rax, 7
 	mov rdx, 0
 	xsave [backup_storage_area]
@@ -111,7 +110,7 @@ multiplier:
 	pop rbp                      ;Restore rbp to the base of the activation record of the caller program
 	; - - - - - - - - - - - - - ; - - - - - - - - - - END SEGMENT .TEXT ~POST~ REQS - - - - - - - - - - - - - - ; - - - - - - - - - - - - - - - - ;
 	
-	; return the ~answer~
+	; return the answer
 	movsd xmm0, [rsp]
 	pop rax
 	pop rax
