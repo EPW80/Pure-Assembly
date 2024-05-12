@@ -2,7 +2,7 @@
 	; components that manage, input, output and sort the array.
 	; Development Environment: [Linux Ubuntu 22.04]
 	; NASM Version: [NASM 2.14.02]
-	; Compilation Command: nasm - f elf64 - o executive.o executive.asm
+	; Compilation Command: nasm -f elf64 -l fgets.lis -o fgets.o fgets.asm
 	; Processor Architecture: [x86_64]
 	; Floating - Point Standard: IEEE 754
 	; Copyright (C) <2024> <Erik Williams>

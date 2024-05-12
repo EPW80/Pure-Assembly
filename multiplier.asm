@@ -2,7 +2,7 @@
 	; components that manage, input, output and sort the array.
 	; Development Environment: [Linux Ubuntu 22.04]
 	; NASM Version: [NASM 2.14.02]
-	; Compilation Command: nasm - f elf64 - o executive.o executive.asm
+	; Compilation Command: nasm -f elf64 -l multiplier.lis -o multiplier.o multiplier.asm
 	; Processor Architecture: [x86_64]
 	; Floating - Point Standard: IEEE 754
 	; Copyright (C) <2024> <Erik Williams>
@@ -29,16 +29,16 @@
 	
 	global multiplier
 	
-	section .bss
+	segment .bss
+	;This section (or segment) is for declaring empty arrays
 	
 	align 64
 	; required for xstor and xrstor instructions
-	
 	backup_storage_area resb 832
 	
-	section .text
-	
+	segment .text
 multiplier:
+	
 	; - - - - - - - - - BEGIN SEGMENT .TEXT ~PRE~ REQS - - - - - - - - - - ;
 	; backup GPRs (General Purpose Registers)
 	push rbp
@@ -63,7 +63,7 @@ multiplier:
 	xsave [backup_storage_area]
 	; - - - - - - - - - - END SEGMENT .TEXT ~PRE~ REQS - - - - - - - - - - - - ;
 	
-	; work on numerator
+	; work on ~numerator~
 	movsd xmm15, xmm0            ; (x) = angle
 	mov r10, rdi
 	movsd xmm14, xmm15
@@ -72,7 +72,7 @@ multiplier:
 	cvtsi2sd xmm13, r15          ; xmm13 = ( - 1.0)
 	mulsd xmm14, xmm13           ; xmm14 = ( - 1) * (x^2)
 	
-	; work on denominator
+	; work on ~denominator~
 	mov rax, 2
 	mul r10                      ; !!mul by 2 from rax!!
 	add r10, 2                   ; r10 = (2n + 2)
@@ -83,7 +83,7 @@ multiplier:
 	cvtsi2sd xmm12, r10          ; xmm12 is the (denominator)
 	divsd xmm14, xmm12           ; xmm14 has the (answer)
 	
-	; put answer on stack
+	; put ~answer~ on stack
 	push qword 0
 	push qword 0
 	movsd [rsp], xmm14
@@ -93,7 +93,6 @@ multiplier:
 	mov rax, 7
 	mov rdx, 0
 	xrstor [backup_storage_area]
-	
 	;Restore the GPRs
 	popf
 	pop r15
@@ -112,7 +111,7 @@ multiplier:
 	pop rbp                      ;Restore rbp to the base of the activation record of the caller program
 	; - - - - - - - - - - - - - ; - - - - - - - - - - END SEGMENT .TEXT ~POST~ REQS - - - - - - - - - - - - - - ; - - - - - - - - - - - - - - - - ;
 	
-	; return the answer
+	; return the ~answer~
 	movsd xmm0, [rsp]
 	pop rax
 	pop rax
